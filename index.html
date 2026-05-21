@@ -1,0 +1,211 @@
+        const inputs = {
+            salary: document.getElementById('salary'),
+            socialInsurance: document.getElementById('socialInsurance'),
+            housingFund: document.getElementById('housingFund'),
+            specialDeduction: document.getElementById('specialDeduction'),
+            workers: document.getElementById('workers'),
+            costPerUnit: document.getElementById('costPerUnit'),
+            workDays: document.getElementById('workDays'),
+            workHours: document.getElementById('workHours'),
+            lines: document.getElementById('lines')
+        };
+
+        const outputs = {
+            displaySalary: document.getElementById('displaySalary'),
+            displaySocial: document.getElementById('displaySocial'),
+            displayHousing: document.getElementById('displayHousing'),
+            taxableIncome: document.getElementById('taxableIncome'),
+            personalTax: document.getElementById('personalTax'),
+            netSalary: document.getElementById('netSalary'),
+            taxDetailSalary: document.getElementById('taxDetailSalary'),
+            taxDetailThreshold: document.getElementById('taxDetailThreshold'),
+            taxDetailSocial: document.getElementById('taxDetailSocial'),
+            taxDetailHousing: document.getElementById('taxDetailHousing'),
+            taxDetailSpecial: document.getElementById('taxDetailSpecial'),
+            taxDetailTaxable: document.getElementById('taxDetailTaxable'),
+            taxDetailRate: document.getElementById('taxDetailRate'),
+            taxDetailQuick: document.getElementById('taxDetailQuick'),
+            taxDetailTax: document.getElementById('taxDetailTax'),
+            monthlyWage: document.getElementById('monthlyWage'),
+            monthlyNetWage: document.getElementById('monthlyNetWage'),
+            dailyOutput: document.getElementById('dailyOutput'),
+            perPersonDaily: document.getElementById('perPersonDaily'),
+            perPersonHourly: document.getElementById('perPersonHourly'),
+            monthlyOutput: document.getElementById('monthlyOutput'),
+            totalMonthlyWage: document.getElementById('totalMonthlyWage'),
+            totalMonthlyNetWage: document.getElementById('totalMonthlyNetWage'),
+            judgement: document.getElementById('judgement'),
+            scenarioBody: document.getElementById('scenarioBody')
+        };
+
+        function formatNumber(num) {
+            if (num >= 10000) {
+                return num.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+            }
+            return num.toLocaleString('zh-CN', { maximumFractionDigits: 1 });
+        }
+
+        function formatMoney(num) {
+            return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function calculateTax(income, social, housing, special) {
+            const threshold = 5000;
+            const taxable = Math.max(0, income - threshold - social - housing - special);
+            
+            let rate, quickDeduction;
+            if (taxable <= 0) {
+                rate = 0;
+                quickDeduction = 0;
+            } else if (taxable <= 3000) {
+                rate = 0.03;
+                quickDeduction = 0;
+            } else if (taxable <= 12000) {
+                rate = 0.10;
+                quickDeduction = 210;
+            } else if (taxable <= 25000) {
+                rate = 0.20;
+                quickDeduction = 1410;
+            } else if (taxable <= 35000) {
+                rate = 0.25;
+                quickDeduction = 2660;
+            } else if (taxable <= 55000) {
+                rate = 0.30;
+                quickDeduction = 4410;
+            } else if (taxable <= 80000) {
+                rate = 0.35;
+                quickDeduction = 7160;
+            } else {
+                rate = 0.45;
+                quickDeduction = 15160;
+            }
+            
+            const tax = Math.max(0, taxable * rate - quickDeduction);
+            return {
+                taxable: taxable,
+                tax: tax,
+                rate: rate,
+                quickDeduction: quickDeduction,
+                netIncome: income - social - housing - tax
+            };
+        }
+
+        function calculate() {
+            const salary = parseFloat(inputs.salary.value) || 0;
+            const social = parseFloat(inputs.socialInsurance.value) || 0;
+            const housing = parseFloat(inputs.housingFund.value) || 0;
+            const special = parseFloat(inputs.specialDeduction.value) || 0;
+            const workers = parseInt(inputs.workers.value) || 1;
+            const costPerUnit = parseFloat(inputs.costPerUnit.value) || 1;
+            const workDays = parseInt(inputs.workDays.value) || 26;
+            const workHours = parseFloat(inputs.workHours.value) || 10;
+            const lines = parseInt(inputs.lines.value) || 1;
+
+            // 个税计算
+            const taxResult = calculateTax(salary, social, housing, special);
+
+            // 工资结果输出
+            outputs.displaySalary.textContent = formatMoney(salary);
+            outputs.displaySocial.textContent = formatMoney(social);
+            outputs.displayHousing.textContent = formatMoney(housing);
+            outputs.taxableIncome.textContent = formatMoney(taxResult.taxable);
+            outputs.personalTax.textContent = formatMoney(taxResult.tax);
+            outputs.netSalary.textContent = formatMoney(taxResult.netIncome);
+
+            // 个税明细
+            outputs.taxDetailSalary.textContent = formatMoney(salary);
+            outputs.taxDetailThreshold.textContent = formatMoney(5000);
+            outputs.taxDetailSocial.textContent = formatMoney(social);
+            outputs.taxDetailHousing.textContent = formatMoney(housing);
+            outputs.taxDetailSpecial.textContent = formatMoney(special);
+            outputs.taxDetailTaxable.textContent = formatMoney(taxResult.taxable);
+            outputs.taxDetailRate.textContent = (taxResult.rate * 100).toFixed(0) + '%';
+            outputs.taxDetailQuick.textContent = formatMoney(taxResult.quickDeduction);
+            outputs.taxDetailTax.textContent = formatMoney(taxResult.tax);
+
+            // 产量计算（基于税前工资计算产量需求，因为企业成本是按税前支出的）
+            const monthlyWage = salary * workers;
+            const monthlyNetWage = taxResult.netIncome * workers;
+            const monthlyOutput = monthlyWage / costPerUnit;
+            const dailyOutput = monthlyOutput / workDays;
+            const perPersonDaily = dailyOutput / workers;
+            const perPersonHourly = perPersonDaily / workHours;
+            const totalMonthlyWage = monthlyWage * lines;
+            const totalMonthlyNetWage = monthlyNetWage * lines;
+
+            // 产量结果输出
+            outputs.monthlyWage.textContent = formatNumber(monthlyWage);
+            outputs.monthlyNetWage.textContent = formatNumber(monthlyNetWage);
+            outputs.dailyOutput.textContent = formatNumber(dailyOutput);
+            outputs.perPersonDaily.textContent = formatNumber(perPersonDaily);
+            outputs.perPersonHourly.textContent = formatNumber(perPersonHourly);
+            outputs.monthlyOutput.textContent = formatNumber(monthlyOutput);
+            outputs.totalMonthlyWage.textContent = formatNumber(totalMonthlyWage);
+            outputs.totalMonthlyNetWage.textContent = formatNumber(totalMonthlyNetWage);
+
+            // 判断难度
+            let judgement = '';
+            if (perPersonDaily < 150) {
+                judgement = `人均日产量 ${formatNumber(perPersonDaily)} 只，难度较低，轻松可达。`;
+            } else if (perPersonDaily < 250) {
+                judgement = `人均日产量 ${formatNumber(perPersonDaily)} 只，难度中等，熟练工可达，需保证物料供应和设备稳定。`;
+            } else if (perPersonDaily < 350) {
+                judgement = `人均日产量 ${formatNumber(perPersonDaily)} 只，难度偏高，需要优化工序或适当增加自动化。`;
+            } else {
+                judgement = `人均日产量 ${formatNumber(perPersonDaily)} 只，难度很高，建议重新评估人工成本占比或提升自动化程度。`;
+            }
+            
+            // 添加到手工资信息
+            judgement += `<br><br>员工到手工资：${formatMoney(taxResult.netIncome)} 元/月（扣除社保 ${formatMoney(social)} 元、公积金 ${formatMoney(housing)} 元、个税 ${formatMoney(taxResult.tax)} 元后）`;
+            
+            outputs.judgement.innerHTML = judgement;
+
+            // 生成场景对比
+            const scenarios = [1.0, 1.15, 1.25, 1.35, 1.5, 1.75, 2.0];
+            let html = '';
+            scenarios.forEach(cost => {
+                const mo = monthlyWage / cost;
+                const pd = mo / workers / workDays;
+                const ph = pd / workHours;
+                const dd = mo / workDays;
+
+                let difficulty = '';
+                let color = '';
+                if (pd < 150) {
+                    difficulty = '轻松';
+                    color = '#16a34a';
+                } else if (pd < 250) {
+                    difficulty = '中等';
+                    color = '#ca8a04';
+                } else if (pd < 350) {
+                    difficulty = '偏难';
+                    color = '#ea580c';
+                } else {
+                    difficulty = '困难';
+                    color = '#dc2626';
+                }
+
+                const isCurrent = Math.abs(cost - costPerUnit) < 0.001;
+                const bgStyle = isCurrent ? 'background:#eff6ff;' : '';
+
+                html += `<tr style="${bgStyle}">
+                    <td>${cost.toFixed(2)} 元${isCurrent ? ' <span style="color:#4a90d9;font-size:11px;">←当前</span>' : ''}</td>
+                    <td>${formatNumber(pd)} 只</td>
+                    <td>${formatNumber(ph)} 只</td>
+                    <td>${formatNumber(dd)} 只</td>
+                    <td style="color:${color};font-weight:600;">${difficulty}</td>
+                </tr>`;
+            });
+            outputs.scenarioBody.innerHTML = html;
+        }
+
+        // 绑定事件
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', calculate);
+        });
+
+        // 初始化
+        calculate();
+    </script>
+</body>
+</html>
